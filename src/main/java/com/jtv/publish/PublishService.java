@@ -1,5 +1,7 @@
 package com.jtv.publish;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.jtv.config.ConfigContext;
 import com.jtv.config.ConfigProperties;
 import com.jtv.utils.HttpUtil;
@@ -10,24 +12,83 @@ import com.jtv.utils.HttpUtil;
  */
 public class PublishService {
 
-    private static final ConfigProperties configProperties= ConfigContext.getConfigProperties();
+    private static final ConfigProperties configProperties = ConfigContext.getConfigProperties();
 
-    private static final String urlSuffix="/iserver/manager/workspaces.rjson?returnContent=true";
+    private static final String urlSuffix = "/iserver/manager/workspaces.rjson?returnContent=true";
 
     //HGCGSDVig7-ZCVB9aAlo7mqNoTqM14_WIvgiRKs6Bp4z3JsMkgoKpvSXecV5-nKZRpJHSornIWQGK2T6dity3Q..
     public static void main(String[] args) {
 
 
+        PublishService publishService = new PublishService();
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        publishService.publish();
     }
 
-    public void publish(){
+    /**
+     * 检查工作空间是否已经发布
+     * @return true:已发布 / false：未发布
+     */
+    private boolean checkWorkspace() {
+        boolean b=false;
         String url = buildUrl();
-        String param = buildParam();
+        String request = HttpUtil.httpRequest(url, "GET", null);
+        if (request != null && !"".equals(request)) {
 
-        String request = HttpUtil.httpRequest(url, "POST", param);
-        System.out.println(request);
+            JSONArray jsonArray = (JSONArray) JSONArray.parse(request);
+
+            for (Object o : jsonArray) {
+                JSONObject jsonObject = (JSONObject) o;
+                String name = jsonObject.get("name").toString();
+                if (name.equals(configProperties.getWorkSpace())) {
+
+                    ConfigContext.WorkspaceMark workspaceMark = ConfigContext.getConfigContext().getWorkspaceMark();
+
+                    if(workspaceMark==null){
+                        workspaceMark = new ConfigContext.WorkspaceMark(name, o.toString());
+                        ConfigContext.getConfigContext().setWorkspaceMark(workspaceMark);
+                    }
+
+                    b=true;
+                    break;
+                }
+            }
+        }
+
+        return b;
     }
-    private String buildUrl(){
+
+    public void publish() {
+
+        ConfigContext.WorkspaceMark workspaceMark = ConfigContext.getConfigContext().getWorkspaceMark();
+
+        //检查是否已经发布
+        if(workspaceMark==null||!workspaceMark.getKey().equals(configProperties.getWorkSpace())){
+            boolean b = checkWorkspace();
+
+            if(!b){
+                String url = buildUrl();
+                String param = buildParam();
+
+                String request = HttpUtil.httpRequest(url, "POST", param);
+
+                ConfigContext.WorkspaceMark mark = new ConfigContext.WorkspaceMark(configProperties.getWorkSpace(), request);
+
+                ConfigContext.getConfigContext().setWorkspaceMark(mark);
+
+                System.out.println(request);
+            }
+        }
+
+    }
+
+    private String buildUrl() {
         StringBuilder sb = new StringBuilder(configProperties.getServerUrl());
         sb.append(urlSuffix);
         sb.append("&token=");
@@ -35,7 +96,8 @@ public class PublishService {
 
         return sb.toString();
     }
-    private String buildParam(){
+
+    private String buildParam() {
         StringBuilder sb = new StringBuilder("{");
         sb.append("'workspaceConnectionInfo':'server=");
         sb.append(configProperties.getServer());

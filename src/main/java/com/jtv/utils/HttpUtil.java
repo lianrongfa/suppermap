@@ -26,7 +26,7 @@ public abstract class HttpUtil {
      */
     public static String httpRequest(String requestUrl, String requestMethod, String outputStr) {
         if(logger.isDebugEnabled()){
-            logger.debug("web端接口调用[url:"+requestUrl+"][param:"+outputStr+"]");
+            logger.debug("web端接口调用[url:"+requestUrl+"][method="+requestMethod+"][param:"+outputStr+"]");
         }
         StringBuffer buffer = new StringBuffer();
         HttpURLConnection conn = null;
@@ -54,7 +54,7 @@ public abstract class HttpUtil {
             }
 
         } catch (Exception e) {
-            logger.error("web端接口调用出错！[url:"+requestUrl+"][param:"+outputStr+"]",e);
+            logger.error("web端接口调用出错！[url:"+requestUrl+"][method="+requestMethod+"][param:"+outputStr+"]",e);
         } finally {
             if (conn != null) {
                 conn.disconnect();

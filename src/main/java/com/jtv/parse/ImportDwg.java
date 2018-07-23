@@ -2,9 +2,14 @@ package com.jtv.parse;
 
 import com.jtv.config.ConfigProperties;
 import com.jtv.publish.PublishService;
-import com.supermap.data.*;
-import com.supermap.data.conversion.*;
-import com.supermap.mapping.Layer;
+import com.supermap.data.Dataset;
+import com.supermap.data.Datasource;
+import com.supermap.data.Maps;
+import com.supermap.data.Workspace;
+import com.supermap.data.conversion.DataImport;
+import com.supermap.data.conversion.ImportMode;
+import com.supermap.data.conversion.ImportResult;
+import com.supermap.data.conversion.ImportSettingDWG;
 import com.supermap.mapping.Layers;
 import com.supermap.mapping.Map;
 import org.slf4j.Logger;
@@ -12,9 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,36 +31,6 @@ public class ImportDwg extends Source{
     //private ExecutorService executorService=Executors.newFixedThreadPool(4);
 
     public static void main(String[] args) {
-        /*ImportDwg importDwg = new ImportDwg();
-
-        Workspace workspace = importDwg.getWorkspace();
-
-        Datasource datasource = workspace.getDatasources().get(importDwg.getConfigProperties().getAlias());
-
-        Datasets datasets = datasource.getDatasets();
-
-        Maps maps = workspace.getMaps();
-
-        int count = datasets.getCount();
-
-        for (int i=0;i<count;i++){
-
-            Dataset dataset = datasets.get(i);
-
-            Map map = new Map(workspace);
-
-            Layers layers = map.getLayers();
-            layers.add(dataset, true);
-
-            maps.add(dataset.getName(),map.toXML());
-
-            System.out.println("success:"+i);
-        }
-
-
-        workspace.save();
-
-        System.out.println("count:"+workspace.getMaps().getCount());*/
 
         new ImportDwg().parse();
     }
@@ -127,19 +99,19 @@ public class ImportDwg extends Source{
 
         Maps maps = getWorkspace().getMaps();
         String datasetName = dataset.getName();
-        String mapXML=null;
+
         try{
-            mapXML= maps.getMapXML(datasetName);
+            maps.remove(datasetName);
         }catch (Exception e){
         }
-        if(mapXML==null||"".equals(mapXML)){
-            Map map = new Map(getWorkspace());
 
-            Layers layers = map.getLayers();
-            layers.add(dataset, true);
+        Map map = new Map(getWorkspace());
+        //map.setScale(0.002);
+        Layers layers = map.getLayers();
+        layers.add(dataset, true);
 
-            maps.add(dataset.getName(),map.toXML());
-        }
+        maps.add(dataset.getName(),map.toXML());
+
     }
 
 
@@ -162,5 +134,4 @@ public class ImportDwg extends Source{
             buildMap(dataset);
         }
     }
-
 }

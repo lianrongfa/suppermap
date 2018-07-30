@@ -2,14 +2,12 @@ package com.jtv.parse;
 
 import com.jtv.config.ConfigProperties;
 import com.jtv.publish.PublishService;
-import com.supermap.data.Dataset;
-import com.supermap.data.Datasource;
-import com.supermap.data.Maps;
-import com.supermap.data.Workspace;
+import com.supermap.data.*;
 import com.supermap.data.conversion.DataImport;
 import com.supermap.data.conversion.ImportMode;
 import com.supermap.data.conversion.ImportResult;
 import com.supermap.data.conversion.ImportSettingDWG;
+import com.supermap.mapping.Layer;
 import com.supermap.mapping.Layers;
 import com.supermap.mapping.Map;
 import org.slf4j.Logger;
@@ -21,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * 用于导入cad文件数据
  * @author lianrongfa
  * @date 2018/7/17
  */
@@ -28,14 +27,15 @@ public class ImportDwg extends Source{
 
     private final static Logger logger= LoggerFactory.getLogger(ImportDwg.class);
 
-    //private ExecutorService executorService=Executors.newFixedThreadPool(4);
-
     public static void main(String[] args) {
 
         new ImportDwg().parse();
     }
 
 
+    /**
+     * 读取文件解析
+     */
     public void parse(){
         ConfigProperties configProperties = getConfigProperties();
 
@@ -72,50 +72,23 @@ public class ImportDwg extends Source{
             long time1 = System.currentTimeMillis();
             for (final File file : list) {
                 final String absolutePath = file.getAbsolutePath();
-
-                /*Runnable task = new Runnable(){
-                    public void run(){*/
-               importDWG(getDs(),absolutePath);
-                        //countDownLatch.countDown();
-               file.delete();
-                   /* }
-                };
-                executorService.execute(task);*/
-
+                importDWG(getDs(),absolutePath);
+                file.delete();
             }
-            /*try {
-                countDownLatch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
+
             logger.info("解析"+list.length+"个文件用时："+(System.currentTimeMillis()-time1));
+        }else{
+            logger.info("暂时没有文件...");
         }
     }
+
 
     /**
-     * @param dataset 数据集
+     * 将cad文件数据转为suppermap支持的数据
+     * @param ds 导入的数据源
+     * @param file  cad文件路径
      */
-    public void buildMap(Dataset dataset){
-
-        Maps maps = getWorkspace().getMaps();
-        String datasetName = dataset.getName();
-
-        try{
-            maps.remove(datasetName);
-        }catch (Exception e){
-        }
-
-        Map map = new Map(getWorkspace());
-        //map.setScale(0.002);
-        Layers layers = map.getLayers();
-        layers.add(dataset, true);
-
-        maps.add(dataset.getName(),map.toXML());
-
-    }
-
-
-    public void importDWG(Datasource ds, String file){
+    private void importDWG(Datasource ds, String file){
 
         ImportSettingDWG importSettingDWG = new ImportSettingDWG();
 
@@ -130,8 +103,54 @@ public class ImportDwg extends Source{
         String[] names = result.getSucceedDatasetNames(importSettingDWG);
 
         if(names!=null&&names.length>0){
-            Dataset dataset = getDs().getDatasets().get(names[0]);
-            buildMap(dataset);
+            Datasets datasets = ds.getDatasets();
+
+            Dataset dataset = datasets.get(names[0]);
+
+            //新增一个空白面数据集
+            String addRegion=names[0]+"_region";
+            Dataset vector = datasets.get(addRegion);
+            if(vector==null){
+
+                DatasetVectorInfo datasetVectorInfo = new DatasetVectorInfo();
+                datasetVectorInfo.setType(DatasetType.REGION);
+                datasetVectorInfo.setName(addRegion);
+                vector = datasets.create(datasetVectorInfo);
+                // 释放资源
+                datasetVectorInfo.dispose();
+            }
+
+            buildMap(dataset,vector,true);
+
+            vector.close();
+            dataset.close();
         }
+    }
+
+    /**
+     *
+     * @param dataset cad数据集
+     * @param region 面数据集
+     * @param ensureVisible cad是否全幅显示
+     */
+    private void buildMap(Dataset dataset,Dataset region,boolean ensureVisible){
+
+        Maps maps = getWorkspace().getMaps();
+        String datasetName = dataset.getName();
+
+        try{
+            maps.remove(datasetName);
+        }catch (Exception e){
+        }
+
+        Map map = new Map(getWorkspace());
+        Layers layers = map.getLayers();
+        Layer layer = layers.add(dataset, true);
+        layers.add(region, true);
+        if(ensureVisible){
+            map.ensureVisible(layer);
+        }
+        maps.add(dataset.getName(),map.toXML());
+
     }
 }

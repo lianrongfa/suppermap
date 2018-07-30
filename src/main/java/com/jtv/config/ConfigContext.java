@@ -37,7 +37,7 @@ public class ConfigContext {
 
     private ConfigContext(){
         parseProperties();
-        new TokenTimer().executor();
+        TokenTimer.executor();
     }
 
     public static void main(String[] args) {

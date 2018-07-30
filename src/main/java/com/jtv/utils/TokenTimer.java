@@ -2,6 +2,9 @@ package com.jtv.utils;
 
 import com.jtv.config.ConfigContext;
 import com.jtv.config.ConfigProperties;
+import com.jtv.parse.ImportDwg;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.timer.Timer;
 import java.net.InetAddress;
@@ -15,12 +18,14 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/7/16
  */
 public class TokenTimer implements Runnable{
-    private ScheduledExecutorService executorService=
+
+    private static ScheduledExecutorService executorService=
             Executors.newSingleThreadScheduledExecutor();
 
-    private static final String urlSuffix="/iserver/services/security/tokens.rjson";
+    private final static Logger logger= LoggerFactory.getLogger(TokenTimer.class);
+    private static final String urlSuffix="/services/security/tokens.rjson";
 
-    private void pullToken() {
+    public void pullToken() {
 
         ConfigProperties configProperties = ConfigContext.getConfigProperties();
 
@@ -34,7 +39,7 @@ public class TokenTimer implements Runnable{
                 "'ip':'"+getIp()+"'," +
                 "'expiration': 60}";
         String token = HttpUtil.httpRequest(serverUrl, "POST", param);
-
+        logger.info("获得token："+token);
         configProperties.setToken(token);
     }
 
@@ -49,8 +54,8 @@ public class TokenTimer implements Runnable{
         return ip;
     }
 
-    public void executor(){
-        executorService.scheduleAtFixedRate(this,0,59, TimeUnit.MINUTES);
+    public static void executor(){
+        executorService.scheduleAtFixedRate(new TokenTimer(),1,59, TimeUnit.MINUTES);
     }
 
     public void run() {

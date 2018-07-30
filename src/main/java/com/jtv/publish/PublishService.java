@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jtv.config.ConfigContext;
 import com.jtv.config.ConfigProperties;
 import com.jtv.utils.HttpUtil;
+import com.jtv.utils.TokenTimer;
 
 /**
  * @author lianrongfa
@@ -14,7 +15,7 @@ public class PublishService {
 
     private static final ConfigProperties configProperties = ConfigContext.getConfigProperties();
 
-    private static final String urlSuffix = "/iserver/manager/workspaces.rjson?returnContent=true";
+    private static final String urlSuffix = "/manager/workspaces.rjson?returnContent=true";
 
     //HGCGSDVig7-ZCVB9aAlo7mqNoTqM14_WIvgiRKs6Bp4z3JsMkgoKpvSXecV5-nKZRpJHSornIWQGK2T6dity3Q..
     public static void main(String[] args) {
@@ -92,6 +93,10 @@ public class PublishService {
         StringBuilder sb = new StringBuilder(configProperties.getServerUrl());
         sb.append(urlSuffix);
         sb.append("&token=");
+        String token = configProperties.getToken();
+        if(token==null||"".equals(token)){
+            new TokenTimer().pullToken();
+        }
         sb.append(configProperties.getToken());
 
         return sb.toString();

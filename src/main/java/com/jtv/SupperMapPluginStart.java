@@ -30,7 +30,7 @@ public class SupperMapPluginStart implements ServletContextListener{
                     e.printStackTrace();
                 }
             }
-        }, 200, 200, TimeUnit.SECONDS);
+        }, 1, 5, TimeUnit.MINUTES);
         logger.info("auto-improt-file-plugin 启动成功");
     }
 

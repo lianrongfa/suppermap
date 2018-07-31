@@ -13,6 +13,7 @@ import com.supermap.mapping.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.regex.Matcher;
@@ -149,6 +150,7 @@ public class ImportDwg extends Source{
         layers.add(region, true);
         if(ensureVisible){
             map.ensureVisible(layer);
+            map.getBackgroundStyle().setFillForeColor(Color.BLACK);
         }
         maps.add(dataset.getName(),map.toXML());
 

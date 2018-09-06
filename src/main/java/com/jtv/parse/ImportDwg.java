@@ -151,6 +151,7 @@ public class ImportDwg extends Source{
         if(ensureVisible){
             map.ensureVisible(layer);
             map.getBackgroundStyle().setFillForeColor(Color.BLACK);
+
         }
         maps.add(dataset.getName(),map.toXML());
 

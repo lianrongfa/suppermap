@@ -113,7 +113,7 @@ public class PublishService {
         sb.append(";type=ORACLE;database=;name=");
         sb.append(configProperties.getWorkSpace());
         sb.append(";driver=null'");
-        sb.append(",'servicesTypes':['RESTMAP'],'isDataEditable':false,'isMultiInstance':false,'instanceCount':0,'dataProviderDelayCommitSetting':null");
+        sb.append(",'servicesTypes':['RESTMAP','RESTDATA','WMS111'],'isDataEditable':true,'isMultiInstance':false,'instanceCount':0,'dataProviderDelayCommitSetting':null");
         sb.append("}");
         return sb.toString();
     }
